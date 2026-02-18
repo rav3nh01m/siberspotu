@@ -399,47 +399,47 @@ h1.hide {
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    const link = document.getElementById('instagram-link');
-    const username = 'kkusiber'; // Kullanıcı adınız
-    
-    // Cihaz algılama
-    const ua = navigator.userAgent.toLowerCase();
-    const isAndroid = ua.indexOf("android") > -1;
-    const isIOS = /iphone|ipad|ipod/.test(ua);
+    var link = document.getElementById('instagram-link');
+    var username = 'kkusiber'; 
 
     if (link) {
         link.addEventListener('click', function(e) {
             
-            // Masaüstü ise normal çalışsın
+            // Cihaz tespiti
+            var ua = navigator.userAgent.toLowerCase();
+            var isAndroid = ua.indexOf("android") > -1;
+            var isIOS = /iphone|ipad|ipod/.test(ua);
+            
+            // Masaüstü ise normal çalışsın (href'e gider)
             if (!isAndroid && !isIOS) {
                 return;
             }
 
             e.preventDefault();
-            
+            console.log('Mobil yönlendirme başlatılıyor...');
+
             // Web URL (Yedek)
-            const webUrl = 'https://www.instagram.com/' + username + '/';
+            var webUrl = 'https://www.instagram.com/' + username + '/';
 
             if (isAndroid) {
-                // ANDROID İÇİN KESİN ÇÖZÜM:
-                // "_u" parametresini kullanmıyoruz. Direkt tam URL veriyoruz.
-                // "action=android.intent.action.VIEW" komutu, uygulamanın
-                // sadece anasayfayı değil, spesifik içeriği açmasını zorlar.
+                // ANDROID İÇİN "INTERNAL SCHEME" YÖNTEMİ:
+                // Burada scheme=https DEĞİL, scheme=instagram kullanıyoruz.
+                // Bu, uygulamanın 'web yorumlayıcısını' atlar ve direkt 
+                // 'profil görüntüleyiciyi' tetikler.
                 
-                const androidIntent = 'intent://www.instagram.com/' + username + '/#Intent;package=com.instagram.android;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + webUrl + ';end';
+                var androidIntent = 'intent://user?username=' + username + '#Intent;package=com.instagram.android;scheme=instagram;S.browser_fallback_url=' + encodeURIComponent(webUrl) + ';end';
                 
                 window.location.href = androidIntent;
             } 
             
             else if (isIOS) {
-                // iOS İÇİN:
-                // Önce uygulama şeması, sonra web.
-                const iosUrl = 'instagram://user?username=' + username;
+                // iOS YÖNTEMİ:
+                var iosUrl = 'instagram://user?username=' + username;
                 
                 window.location.href = iosUrl;
 
+                // Uygulama yoksa web'e düş
                 setTimeout(function() {
-                    // Sayfa değişmediyse web sitesine git
                     if (!document.hidden) {
                         window.location.href = webUrl;
                     }
