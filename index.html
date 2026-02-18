@@ -612,21 +612,28 @@ h1.hide {
     const introVideo = document.getElementById('intro-video');
     introVideo.classList.add('show');
     
-    // iOS kontrolü
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    console.log('📱 iOS cihaz:', isIOS);
     console.log('📹 Video elementi:', introVideo);
+    console.log('📹 Video src:', introVideo.src);
     
     // Video yüklenmeyi bekle
-    const startWhenReady = () => {
-        if (introVideo.readyState >= 2) {
-            console.log('✅ Video yüklü, başlatılıyor...');
-            startVideoProgress(introVideo, isIOS);
-        } else {
-            console.log('⏳ Video yükleniyor...');
-            introVideo.addEventListener('loadedmetadata', () => {
-                console.log('✅ Video metadata yüklendi, süre:', introVideo.duration);
+    if (introVideo.readyState >= 2) {
+        // Video zaten yüklü
+        console.log('✅ Video zaten yüklü, başlatılıyor...');
+        startVideoProgress(introVideo);
+    } else {
+        // Video yüklenene kadar bekle
+        console.log('⏳ Video yükleniyor...');
+        introVideo.addEventListener('loadedmetadata', () => {
+            console.log('✅ Video yüklendi, süre:', introVideo.duration);
+            startVideoProgress(introVideo);
+        });
+        
+        introVideo.addEventListener('error', (e) => {
+            console.error('❌ Video yükleme hatası:', e);
+            alert('Video yüklenemedi. Dosya adını kontrol edin: Sequence 01.mp4');
+        });
+    }
+}
 
 function startVideoProgress(introVideo) {
     const videoDuration = introVideo.duration * 1000; // milisaniye
@@ -726,53 +733,52 @@ function startVideoProgress(introVideo) {
 
 
 document.getElementById('instagram-link').addEventListener('click', function(e) {
-    if (/Android/i.test(navigator.userAgent)) {
-        // Android için Instagram app intent
-        return; // intent URL çalışsın
-    } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // iOS için
-        e.preventDefault();
-        window.location.href = 'instagram://user?username=kkusiber';
-        setTimeout(() => {
-            if (document.hasFocus()) {
-                window.location.href = 'https://www.instagram.com/kkusiber/';
-            }
+    e.preventDefault(); // Linkin standart web açılışını durdur
+
+    var username = 'kkusiber';
+    var webUrl = 'https://www.instagram.com/' + username + '/';
+    // Bu şema (scheme) hem Android hem iOS uygulamasında doğrudan profile gitmeyi zorlar
+    var appUrl = 'instagram://user?username=' + username; 
+
+    // Kullanıcı ajanı kontrolü (Mobil mi?)
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        
+        // Önce uygulamayı açmayı dene
+        window.location.href = appUrl;
+
+        // Eğer telefonda uygulama yüklü değilse, 500ms sonra tarayıcıda aç
+        // (Uygulama açılırsa tarayıcı arka planda kalır, kullanıcı fark etmez)
+        setTimeout(function() {
+            window.location.href = webUrl;
         }, 500);
+        
+    } else {
+        // Masaüstü bilgisayarlar için direkt yeni sekmede web sitesini aç
+        window.open(webUrl, '_blank');
     }
 });
 
             
-           // Instagram link düzeltmesi
-document.getElementById('instagram-link').addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    const username = 'kkusiber';
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    
-    if (isIOS) {
-        // iOS: Önce app dene, açılmazsa browser
-        window.location.href = 'instagram://user?username=' + username;
-        
-        // 1.5 saniye sonra app açılmadıysa browser'a git
-        setTimeout(function() {
-            window.location.href = 'https://www.instagram.com/' + username + '/';
-        }, 1500);
-        
-    } else if (isAndroid) {
-        // Android: intent URL kullan
-        window.location.href = 'intent://instagram.com/_u/' + username + '/#Intent;package=com.instagram.android;scheme=https;end';
-        
-        // Fallback
-        setTimeout(function() {
-            window.location.href = 'https://www.instagram.com/' + username + '/';
-        }, 1500);
-        
-    } else {
-        // Desktop: yeni sekmede aç
-        window.open('https://www.instagram.com/' + username + '/', '_blank');
-    }
-});
+            timings.forEach((timing, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'info-line';
+                    
+                    const isIP = timing.key === 'ip';
+                    const highlightClass = isIP ? 'ip-highlight' : 'highlight';
+                    
+                    const value = userInfo[timing.key] || 'Bilinmiyor';
+                    line.innerHTML = `${timing.label}: <span class="${highlightClass}">${value}</span>`;
+                    infoScreen.appendChild(line);
+                    
+                    setTimeout(() => {
+                        line.classList.add('show');
+                        line.classList.add('pulse');
+                        
+                        // Otomatik scroll
+                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 10);
+                }, timing.delay);
            
 // En son bilgiden sonra mesajı göster
 setTimeout(() => {
@@ -797,14 +803,9 @@ setTimeout(() => {
         });
     </script>
 <div id="final-message">
-        <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="intent://instagram.com/_u/kkusiber/#Intent;package=com.instagram.android;scheme=https;end" 
-       data-web-fallback="https://www.instagram.com/kkusiber/" 
-       target="_blank" 
-       id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
+        <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="https://www.instagram.com/kkusiber/" target="_blank" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
     </div>
 </body>
 
 </html>
-
-
 
