@@ -400,7 +400,7 @@ h1.hide {
 document.addEventListener('DOMContentLoaded', function() {
     
     const link = document.getElementById('instagram-link');
-    const username = 'kkusiber';
+    const username = 'kkusiber'; // Kullanıcı adınız
     
     // Cihaz algılama
     const ua = navigator.userAgent.toLowerCase();
@@ -410,45 +410,39 @@ document.addEventListener('DOMContentLoaded', function() {
     if (link) {
         link.addEventListener('click', function(e) {
             
-            // Masaüstü bilgisayarlar için varsayılan (href) çalışsın
+            // Masaüstü ise normal çalışsın
             if (!isAndroid && !isIOS) {
                 return;
             }
 
             e.preventDefault();
-            console.log('Mobil yönlendirme deneniyor...');
-
-            // Ortak Web URL'si
+            
+            // Web URL (Yedek)
             const webUrl = 'https://www.instagram.com/' + username + '/';
-            // Ortak Uygulama URL'si (Hem iOS hem Android bu şemayı anlar)
-            const appScheme = 'instagram://user?username=' + username;
 
             if (isAndroid) {
-                // ANDROID İÇİN "NUCLEAR" YÖNTEM:
-                // Intent şeması bazen bozuk çalışır. 
-                // Direkt şema (instagram://) Android'de profil sayfasına zorlar.
+                // ANDROID İÇİN KESİN ÇÖZÜM:
+                // "_u" parametresini kullanmıyoruz. Direkt tam URL veriyoruz.
+                // "action=android.intent.action.VIEW" komutu, uygulamanın
+                // sadece anasayfayı değil, spesifik içeriği açmasını zorlar.
                 
-                // 1. Önce uygulamayı açmayı dene
-                window.location.href = appScheme;
-
-                // 2. Eğer telefonda uygulama yoksa hiçbir şey olmaz, 
-                // bu yüzden 1 saniye sonra web sitesine yönlendir.
-                // (Uygulama açılırsa tarayıcı arka plana geçer, bu kod çalışsa bile kullanıcı görmez)
-                setTimeout(function() {
-                    if (!document.hidden) { // Sadece tarayıcı hala ekrandaysa yönlendir
-                        window.location.href = webUrl;
-                    }
-                }, 1000);
+                const androidIntent = 'intent://www.instagram.com/' + username + '/#Intent;package=com.instagram.android;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + webUrl + ';end';
+                
+                window.location.href = androidIntent;
             } 
             
             else if (isIOS) {
-                // iOS İÇİN STANDART YÖNTEM:
-                window.location.href = appScheme;
+                // iOS İÇİN:
+                // Önce uygulama şeması, sonra web.
+                const iosUrl = 'instagram://user?username=' + username;
+                
+                window.location.href = iosUrl;
 
                 setTimeout(function() {
-                   if (!document.hidden) {
-                       window.location.href = webUrl;
-                   }
+                    // Sayfa değişmediyse web sitesine git
+                    if (!document.hidden) {
+                        window.location.href = webUrl;
+                    }
                 }, 500);
             }
         });
