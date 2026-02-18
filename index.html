@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamu Spotu - KKU Cyber</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Video arkaplan - başlangıçta gizli */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            object-fit: cover;
+            display: none;
+        }
+
+
+
+        #loading-screen {
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       justify-content: center;
+       text-align: center;
+       padding: 40px;
+       z-index: 10;
+       background: rgba(0, 0, 0, 0.8);
+       border-radius: 20px;
+       transition: all 0.5s ease;
+             }
+
+#loading-screen.video-playing {
+    justify-content: flex-start;
+    padding-top: 20px;
+    width: 90%;
+    max-width: 800px;
+}  
+
+
+
+
+
+        h1 {
+    font-size: 4em;
+    margin-bottom: 40px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px #ff0000;
+    transition: opacity 0.5s ease;
+}
+
+h1.hide {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+
+
+
+        #progress-container {
+            width: 400px;
+            height: 30px;
+            background: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 2px solid #666;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        #progress-text {
+            font-size: 1.5em;
+            margin-bottom: 40px;
+        }
+
+        #start-button {
+            padding: 20px 60px;
+            font-size: 1.5em;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        #start-button:hover {
+            background: #cc0000;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+        }
+
+        #warning {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #999;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        #info-screen {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            padding-top: 50px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center;
+            scroll-behavior: smooth;
+            font-family: Arial, Helvetica, sans-serif; 
+        }
+
+        .info-line {
+            font-size: 1.6em;
+            margin: 10px 0;
+            opacity: 0;
+            transform: translateY(20px); 
+            width: 100%;
+            max-width: 900px;
+            color: #d8d8d8;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .info-line.show {
+            animation: slideIn 0.3s forwards;
+        }
+       
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .highlight {
+            color: #d8d8d8;
+            font-weight: bold;
+        }
+
+        .ip-highlight {
+            color: #d8d8d8;
+            font-weight: bold;
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            #progress-container {
+                width: 280px;
+            }
+            .info-line {
+                font-size: 1.1em;
+                margin: 8px 0;
+            }
+            #start-button {
+                padding: 15px 35px;
+                font-size: 1.2em;
+            }
+            #loading-screen {
+                padding: 20px;
+            }
+            #warning {
+                font-size: 0.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            .info-line {
+                font-size: 0.95em;
+            }
+            #start-button {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+        #logo {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: auto;
+    opacity: 0.9;
+    z-index: 11;
+}
+
+@media (max-width: 768px) {
+    #logo {
+        width: 100px;
+        bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    #logo {
+        width: 80px;
+        bottom: 15px;
+    }
+}
+#final-message {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    text-align: center;
+    opacity: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px 25px;
+    border-radius: 10px;
+    border: 2px solid #ff0000;
+    max-width: 400px;
+}
+
+#final-message.show {
+    animation: fadeInDown 1s forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#final-message p {
+    font-size: 1em;
+    margin: 0;
+    color: #fff;
+}
+
+#final-message a {
+    color: #ff0000;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+#final-message a:hover {
+    color: #ff6600;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+    #final-message {
+        top: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        max-width: 85%;
+    }
+    
+    #final-message.show {
+        animation: fadeInDownMobile 1s forwards;
+    }
+    
+    @keyframes fadeInDownMobile {
+        from {
+            opacity: 0;
+            transform: translateX(50%) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(50%) translateY(0);
+        }
+    }
+    
+    #final-message p {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    #final-message {
+        padding: 12px 18px;
+        top: 15px;
+    }
+    
+    #final-message p {
+        font-size: 0.8em;
+    }
+}
+
+#intro-video {
+    width: 100%;
+    max-width: 700px;
+    border-radius: 10px;
+    margin: 20px 0;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#intro-video.show {
+    display: block;
+    opacity: 1;
+}
+
+#progress-container.top {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    #intro-video {
+        max-width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+  
+    <!-- Video - başlangıçta gizli, muted değil -->
+    <video id="bg-video" loop playsinline preload="auto">
+        <source src="video.mp4" type="video/mp4">
+    </video>
+
+    <div id="loading-screen">
+        
+        <video id="intro-video" preload="auto">
+            <source src="Sequence 01.mp4" type="video/mp4">
+        </video>
+
+        <h1>NEREDEYİM?</h1>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div id="progress-text">0%</div>
+        <button id="start-button">Öğrenmek İçin Tıkla</button>
+        <div id="warning">
+            Bu bir kamu spotu içeriğidir. Ekranda görünen bilgiler hiç bir yerde depolanmamakta veya paylaşılmamaktadır.
+        </div>
+         <img src="logo.jpeg" alt="Logo" id="logo">
+    </div>
+
+    <div id="info-screen"></div>
+
+    <script>
+        let userInfo = {};
+
+        async function collectUserInfo() {
+            console.log('🔍 Bilgi toplama başladı...');
+            
+            try {
+                // Tarayıcı bilgileri
+                userInfo.browserName = detectBrowser();
+                userInfo.platform = navigator.platform || 'Bilinmiyor';
+                
+                // Browser version - daha kapsamlı
+                const ua = navigator.userAgent;
+                let version = 'Bilinmiyor';
+                if (ua.indexOf('Chrome') > -1) {
+                    const match = ua.match(/Chrome\/(\d+\.\d+\.\d+\.\d+)/);
+                    version = match ? match[1] : ua.match(/Chrome\/(\d+)/)[1] + '.0.0.0';
+                } else if (ua.indexOf('Firefox') > -1) {
+                    const match = ua.match(/Firefox\/(\d+\.\d+)/);
+                    version = match ? match[1] : 'Bilinmiyor';
+                } else if (ua.indexOf('Safari') > -1) {
+                    const match = ua.match(/Version\/(\d+\.\d+)/);
+                    version = match ? match[1] : 'Bilinmiyor';
+                }
+                userInfo.browserVersion = version;
+
+                // Mobil kontrolü
+                userInfo.isMobile = /Mobile|Tablet|Android|iPhone|iPad/i.test(ua) ? 'Evet' : 'Hayır';
+                
+                // Ekran bilgileri - kesin çalışır
+                userInfo.screenWidth = window.screen.width + 'px';
+                userInfo.screenHeight = window.screen.height + 'px';
+                userInfo.windowWidth = window.innerWidth + 'px';
+                userInfo.windowHeight = window.innerHeight + 'px';
+                userInfo.pixelDepth = window.screen.pixelDepth || window.screen.colorDepth || 'Bilinmiyor';
+                
+                // Orientation - iyileştirilmiş
+                if (window.screen.orientation) {
+                    userInfo.orientation = window.screen.orientation.type;
+                } else if (window.orientation !== undefined) {
+                    userInfo.orientation = Math.abs(window.orientation) === 90 ? 'landscape' : 'portrait';
+                } else {
+                    userInfo.orientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+                }
+                
+                // CPU threads
+                userInfo.cpuThreads = navigator.hardwareConcurrency || 'Bilinmiyor';
+                
+                // Memory - GB olarak
+                if (navigator.deviceMemory) {
+                    userInfo.memory = navigator.deviceMemory + 'GB';
+                } else {
+                    userInfo.memory = 'Bilinmiyor';
+                }
+                
+                // Dil
+                userInfo.language = navigator.language || navigator.userLanguage || 'Bilinmiyor';
+                
+                // Referrer
+                userInfo.referrer = document.referrer || 'Direkt Erişim';
+                
+                // Timezone
+                try {
+                    userInfo.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                } catch (e) {
+                    userInfo.timezone = 'Bilinmiyor';
+                }
+                
+                // Current time
+                userInfo.currentTime = new Date().toLocaleString('tr-TR', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                // GPU bilgisi - geliştirilmiş
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            userInfo.gpuVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                            userInfo.gpuInfo = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        } else {
+                            userInfo.gpuVendor = gl.getParameter(gl.VENDOR) || 'Bilinmiyor';
+                            userInfo.gpuInfo = gl.getParameter(gl.RENDERER) || 'Bilinmiyor';
+                        }
+                    } else {
+                        userInfo.gpuVendor = 'WebGL Desteklenmiyor';
+                        userInfo.gpuInfo = 'WebGL Desteklenmiyor';
+                    }
+                } catch (e) {
+                    console.error('GPU bilgisi alınamadı:', e);
+                    userInfo.gpuVendor = 'Alınamadı';
+                    userInfo.gpuInfo = 'Alınamadı';
+                }
+
+                // IP ve lokasyon - önce ipapi.co dene, sonra alternatif
+                console.log('🌍 IP bilgisi alınıyor...');
+                try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 5000); // 5 saniye timeout
+
+                    const response = await fetch('https://ipapi.co/json/', {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    clearTimeout(timeout);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ IP bilgisi alındı:', data);
+                        
+                        userInfo.ip = data.ip || 'Bilinmiyor';
+                        userInfo.country = data.country_name || 'Bilinmiyor';
+                        userInfo.region = data.region || 'Bilinmiyor';
+                        userInfo.city = data.city || 'Bilinmiyor';
+                        userInfo.zipCode = data.postal || 'Bilinmiyor';
+                        
+                        const locationParts = [];
+                        if (data.city) locationParts.push(data.city);
+                        if (data.postal) locationParts.push(data.postal);
+                        if (data.country_name) locationParts.push(data.country_name);
+                        userInfo.fullLocation = locationParts.length > 0 ? locationParts.join(', ') : 'Bilinmiyor';
+                        
+                        userInfo.latitude = data.latitude || 'Bilinmiyor';
+                        userInfo.longitude = data.longitude || 'Bilinmiyor';
+                        userInfo.isp = data.org || 'Bilinmiyor';
+                        userInfo.asn = data.asn || 'Bilinmiyor';
+                    } else {
+                        throw new Error('API yanıt vermedi');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ ipapi.co başarısız, alternatif deneniyor...', error);
+                    
+                    // Alternatif API: ipify + ipapi
+                    try {
+                        const ipResponse = await fetch('https://api.ipify.org?format=json');
+                        const ipData = await ipResponse.json();
+                        userInfo.ip = ipData.ip;
+                        
+                        // IP ile location bilgisi al
+                        const locResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+                        const locData = await locResponse.json();
+                        
+                        if (locData.status === 'success') {
+                            userInfo.country = locData.country || 'Bilinmiyor';
+                            userInfo.region = locData.regionName || 'Bilinmiyor';
+                            userInfo.city = locData.city || 'Bilinmiyor';
+                            userInfo.zipCode = locData.zip || 'Bilinmiyor';
+                            userInfo.fullLocation = `${locData.city || ''}, ${locData.zip || ''}, ${locData.country || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '');
+                            userInfo.latitude = locData.lat || 'Bilinmiyor';
+                            userInfo.longitude = locData.lon || 'Bilinmiyor';
+                            userInfo.isp = locData.isp || 'Bilinmiyor';
+                            userInfo.asn = locData.as || 'Bilinmiyor';
+                        } else {
+                            throw new Error('Location API başarısız');
+                        }
+                    } catch (altError) {
+                        console.error('❌ Tüm IP API\'leri başarısız:', altError);
+                        userInfo.ip = 'Alınamadı';
+                        userInfo.country = 'Bilinmiyor';
+                        userInfo.region = 'Bilinmiyor';
+                        userInfo.city = 'Bilinmiyor';
+                        userInfo.zipCode = 'Bilinmiyor';
+                        userInfo.fullLocation = 'Bilinmiyor';
+                        userInfo.latitude = 'Bilinmiyor';
+                        userInfo.longitude = 'Bilinmiyor';
+                        userInfo.isp = 'Bilinmiyor';
+                        userInfo.asn = 'Bilinmiyor';
+                    }
+                }
+                
+                console.log('✅ Tüm bilgiler toplandı:', userInfo);
+            } catch (error) {
+                console.error('❌ Bilgi toplama genel hatası:', error);
+            }
+        }
+
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            if (ua.indexOf('Firefox') > -1) return 'Firefox';
+            if (ua.indexOf('Edg') > -1) return 'Edge';
+            if (ua.indexOf('Chrome') > -1) return 'Chrome';
+            if (ua.indexOf('Safari') > -1) return 'Safari';
+            if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) return 'Opera';
+            if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) return 'Internet Explorer';
+            return 'Bilinmiyor';
+        }
+
+
+
+
+        function startProgress() {
+    console.log('🎬 startProgress başladı');
+    
+    // Başlığı gizle
+    document.querySelector('h1').classList.add('hide');
+    
+    // Loading screen'i düzenle
+    const loadingScreen = document.getElementById('loading-screen');
+    loadingScreen.classList.add('video-playing');
+    
+    // Progress container'ı üste taşı
+    document.getElementById('progress-container').classList.add('top');
+    
+    // Intro videoyu göster
+    const introVideo = document.getElementById('intro-video');
+    introVideo.classList.add('show');
+    
+    console.log('📹 Video elementi:', introVideo);
+    console.log('📹 Video src:', introVideo.src);
+    
+    // Video yüklenmeyi bekle
+    if (introVideo.readyState >= 2) {
+        // Video zaten yüklü
+        console.log('✅ Video zaten yüklü, başlatılıyor...');
+        startVideoProgress(introVideo);
+    } else {
+        // Video yüklenene kadar bekle
+        console.log('⏳ Video yükleniyor...');
+        introVideo.addEventListener('loadedmetadata', () => {
+            console.log('✅ Video yüklendi, süre:', introVideo.duration);
+            startVideoProgress(introVideo);
+        });
+        
+        introVideo.addEventListener('error', (e) => {
+            console.error('❌ Video yükleme hatası:', e);
+            alert('Video yüklenemedi. Dosya adını kontrol edin: Sequence 01.mp4');
+        });
+    }
+}
+
+function startVideoProgress(introVideo) {
+    const videoDuration = introVideo.duration * 1000; // milisaniye
+    const updateInterval = videoDuration / 100; // 100 adımda
+    
+    console.log('⏱️ Video süresi:', videoDuration, 'ms');
+    console.log('⏱️ Update interval:', updateInterval, 'ms');
+    
+    let progress = 0;
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    // Videoyu başlat
+    introVideo.play().then(() => {
+        console.log('▶️ Video oynatılıyor');
+    }).catch(e => {
+        console.error('❌ Video oynatma hatası:', e);
+        // Sessiz dene
+        introVideo.muted = true;
+        introVideo.play().then(() => {
+            console.log('▶️ Video sessiz oynatılıyor');
+            setTimeout(() => {
+                introVideo.muted = false;
+            }, 100);
+        });
+    });
+    
+    // Progress bar'ı güncelle
+    const progressInterval = setInterval(() => {
+        progress += 1;
+        progressBar.style.width = progress + '%';
+        progressText.textContent = progress + '%';
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            console.log('✅ Progress tamamlandı, geçiş yapılıyor...');
+            
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('info-screen').style.display = 'flex';
+                
+                const bgVideo = document.getElementById('bg-video');
+                bgVideo.style.display = 'block';
+                
+                bgVideo.play().catch(e => {
+                    console.warn('⚠️ Arkaplan video otomatik oynatılamadı:', e);
+                    bgVideo.muted = true;
+                    bgVideo.play().then(() => {
+                        setTimeout(() => {
+                            bgVideo.muted = false;
+                        }, 100);
+                    });
+                });
+                
+                startInfoReveal();
+            }, 500);
+        }
+    }, updateInterval);
+}
+
+
+
+
+        function startInfoReveal() {
+            const infoScreen = document.getElementById('info-screen');
+            
+            const timings = [
+                { delay: 469, key: 'ip', label: 'IP Address' },
+                { delay: 938, key: 'country', label: 'Country' },
+                { delay: 1406, key: 'region', label: 'Region' },
+                { delay: 1875, key: 'city', label: 'City' },
+                { delay: 2344, key: 'zipCode', label: 'ZIP Code' },
+                { delay: 2813, key: 'fullLocation', label: 'Full Location' },
+                { delay: 3281, key: 'latitude', label: 'Latitude' },
+                { delay: 3750, key: 'longitude', label: 'Longitude' },
+                { delay: 4219, key: 'timezone', label: 'Timezone' },
+                { delay: 4688, key: 'currentTime', label: 'Current Time' },
+                { delay: 5156, key: 'isp', label: 'ISP' },
+                { delay: 5625, key: 'asn', label: 'Autonomous System' },
+                { delay: 6094, key: 'browserName', label: 'Browser Name' },
+                { delay: 6563, key: 'platform', label: 'Platform Name' },
+                { delay: 7031, key: 'browserVersion', label: 'Browser Version' },
+                { delay: 7500, key: 'isMobile', label: 'Mobile/Tablet' },
+                { delay: 7969, key: 'referrer', label: 'Referrer' },
+                { delay: 8438, key: 'language', label: 'System Languages' },
+                { delay: 8906, key: 'screenWidth', label: 'Screen Width' },
+                { delay: 9375, key: 'screenHeight', label: 'Screen Height' },
+                { delay: 9844, key: 'windowWidth', label: 'Window Width' },
+                { delay: 10313, key: 'windowHeight', label: 'Window Height' },
+                { delay: 10781, key: 'pixelDepth', label: 'Display Pixel Depth' },
+                { delay: 11250, key: 'orientation', label: 'Screen Orientation' },
+                { delay: 11719, key: 'cpuThreads', label: 'CPU Threads' },
+                { delay: 12188, key: 'memory', label: 'Available Browser Memory' },
+                { delay: 12656, key: 'gpuVendor', label: 'GPU Vendor' },
+                { delay: 13125, key: 'gpuInfo', label: 'GPU Info' }
+            ];
+
+            timings.forEach((timing, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'info-line';
+                    
+                    const isIP = timing.key === 'ip';
+                    const highlightClass = isIP ? 'ip-highlight' : 'highlight';
+                    
+                    const value = userInfo[timing.key] || 'Bilinmiyor';
+                    line.innerHTML = `${timing.label}: <span class="${highlightClass}">${value}</span>`;
+                    infoScreen.appendChild(line);
+                    
+                    setTimeout(() => {
+                        line.classList.add('show');
+                        line.classList.add('pulse');
+                        
+                        // Otomatik scroll
+                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 10);
+                }, timing.delay);
+           
+// En son bilgiden sonra mesajı göster
+setTimeout(() => {
+    document.getElementById('final-message').classList.add('show');
+}, 14000); // 13125 + ~1000ms ekstra
+
+            });
+        }
+
+        document.getElementById('start-button').addEventListener('click', async () => {
+            const button = document.getElementById('start-button');
+            button.disabled = true;
+            button.textContent = 'Yükleniyor...';
+            
+            await collectUserInfo();
+            startProgress();
+        });
+
+        // Sayfa yüklendiğinde bilgileri ön yükleme
+        window.addEventListener('load', () => {
+            collectUserInfo();
+        });
+    </script>
+<div id="final-message">
+        <p>Sakin ol, nasıl yapıldığını öğrenmek için <a href="https://www.instagram.com/kkusiber/" target="_blank">@kkusiber</a>'i ziyaret edin</p>
+    </div>
+</body>
+</html>
