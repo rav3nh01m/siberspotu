@@ -834,19 +834,29 @@ h1.hide {
             collectUserInfo();
         });
 
-    // Instagram link düzeltmesi - ANDROID ÖZEL ÇÖZÜM
+// Instagram link düzeltmesi - DEBUG VERSİYONU
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOMContentLoaded - Script yüklendi');
+    
     const link = document.getElementById('instagram-link');
+    console.log('🔗 Link elementi:', link);
+    
     if (link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('🖱️ Link tıklandı!');
             
             const username = 'kkusiber';
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            const isAndroid = /Android/i.test(navigator.userAgent);
+            const ua = navigator.userAgent;
+            const isIOS = /iPhone|iPad|iPod/i.test(ua);
+            const isAndroid = /Android/i.test(ua);
+            
+            console.log('📱 User Agent:', ua);
+            console.log('🍎 iOS:', isIOS);
+            console.log('🤖 Android:', isAndroid);
             
             if (isIOS) {
-                // iOS çözümü - çalışıyor, dokunma
+                console.log('➡️ iOS yönlendirmesi başlıyor...');
                 const iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
                 iframe.src = 'instagram://user?username=' + username;
@@ -854,24 +864,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 setTimeout(() => {
                     document.body.removeChild(iframe);
+                    console.log('🌐 iOS web yönlendirmesi:', 'https://www.instagram.com/' + username + '/');
                     window.location.href = 'https://www.instagram.com/' + username + '/';
                 }, 500);
                 
             } else if (isAndroid) {
-                // Android için YENİ ÇÖZÜM - Instagram Web'i aç, Chrome otomatik app sorar
-                const webUrl = 'https://www.instagram.com/' + username + '/';
+                console.log('➡️ Android yönlendirmesi başlıyor...');
                 
-                // Sayfayı yeni sekmede değil, aynı sekmede aç
-                window.location.href = webUrl;
+                // Çözüm 1: Direkt app scheme
+                const appUrl = 'instagram://user?username=' + username;
+                console.log('📲 App URL:', appUrl);
                 
-                // NOT: Instagram uygulaması yüklüyse, Chrome tarayıcısı otomatik olarak
-                // "Instagram'da aç" butonu gösterecek. Kullanıcı oradan açabilir.
+                window.location.href = appUrl;
+                
+                // Fallback
+                setTimeout(() => {
+                    console.log('🌐 Fallback web URL:', 'https://www.instagram.com/' + username + '/');
+                    window.location.href = 'https://www.instagram.com/' + username + '/';
+                }, 1500);
                 
             } else {
-                // Desktop: yeni sekmede aç
+                console.log('➡️ Desktop yönlendirmesi');
                 window.open('https://www.instagram.com/' + username + '/', '_blank');
             }
         });
+    } else {
+        console.error('❌ Link elementi bulunamadı!');
     }
 });
     </script>
@@ -881,5 +899,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </html>
+
 
 
