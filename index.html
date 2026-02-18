@@ -397,58 +397,63 @@ h1.hide {
 
     <script>
 
-        document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     
-    // Link elementini seç
     const link = document.getElementById('instagram-link');
     const username = 'kkusiber';
     
     // Cihaz algılama
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isAndroid = /android/i.test(ua);
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    const ua = navigator.userAgent.toLowerCase();
+    const isAndroid = ua.indexOf("android") > -1;
+    const isIOS = /iphone|ipad|ipod/.test(ua);
 
     if (link) {
         link.addEventListener('click', function(e) {
             
-            // Eğer masaüstü ise hiç elleme, normal href çalışsın (HTML'de href="#" yerine linki yazacağız)
+            // Masaüstü bilgisayarlar için varsayılan (href) çalışsın
             if (!isAndroid && !isIOS) {
-                return; 
+                return;
             }
 
             e.preventDefault();
-            console.log('Mobil yönlendirme başlatılıyor...');
+            console.log('Mobil yönlendirme deneniyor...');
+
+            // Ortak Web URL'si
+            const webUrl = 'https://www.instagram.com/' + username + '/';
+            // Ortak Uygulama URL'si (Hem iOS hem Android bu şemayı anlar)
+            const appScheme = 'instagram://user?username=' + username;
 
             if (isAndroid) {
-                // ANDROID İÇİN KESİN ÇÖZÜM:
-                // scheme=https yerine scheme=instagram kullanıyoruz.
-                // Bu sayede uygulama "web sayfasını açmaya" çalışmaz, direkt "kullanıcıyı bulma" komutunu alır.
-                // S.browser_fallback_url: Uygulama yoksa otomatik buraya gider (JS timer'a gerek kalmaz).
+                // ANDROID İÇİN "NUCLEAR" YÖNTEM:
+                // Intent şeması bazen bozuk çalışır. 
+                // Direkt şema (instagram://) Android'de profil sayfasına zorlar.
                 
-                const androidUrl = 'intent://user?username=' + username + '#Intent;package=com.instagram.android;scheme=instagram;S.browser_fallback_url=https://www.instagram.com/' + username + '/;end';
-                
-                window.location.href = androidUrl;
+                // 1. Önce uygulamayı açmayı dene
+                window.location.href = appScheme;
+
+                // 2. Eğer telefonda uygulama yoksa hiçbir şey olmaz, 
+                // bu yüzden 1 saniye sonra web sitesine yönlendir.
+                // (Uygulama açılırsa tarayıcı arka plana geçer, bu kod çalışsa bile kullanıcı görmez)
+                setTimeout(function() {
+                    if (!document.hidden) { // Sadece tarayıcı hala ekrandaysa yönlendir
+                        window.location.href = webUrl;
+                    }
+                }, 1000);
             } 
             
             else if (isIOS) {
-                // iOS İÇİN:
-                // iOS'te intent çalışmaz, klasik yöntem + zamanlayıcı kullanılır.
-                
-                const iosAppUrl = 'instagram://user?username=' + username;
-                const iosWebUrl = 'https://www.instagram.com/' + username + '/';
+                // iOS İÇİN STANDART YÖNTEM:
+                window.location.href = appScheme;
 
-                // Önce uygulamayı açmayı dene
-                window.location.href = iosAppUrl;
-
-                // Eğer uygulama yoksa 500ms sonra web'e git
                 setTimeout(function() {
-                    window.location.href = iosWebUrl;
+                   if (!document.hidden) {
+                       window.location.href = webUrl;
+                   }
                 }, 500);
             }
         });
     }
 });
-
         let userInfo = {};
 
         async function collectUserInfo() {
@@ -857,8 +862,8 @@ setTimeout(() => {
         });
     </script>
 <div id="final-message">
-        <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="https://www.instagram.com/kkusiber/" target="_blank" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
-    </div>
+    <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="https://www.instagram.com/kkusiber/" target="_blank" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
+</div>
 </body>
 
 </html>
