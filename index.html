@@ -24,9 +24,20 @@
         }
 
         /* Video arkaplan - başlangıçta gizli */
-<video id="bg-video" loop playsinline webkit-playsinline preload="auto">
-    <source src="video.mp4" type="video/mp4">
-</video>
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            object-fit: cover;
+            display: none;
+        }
+
 
 
         #loading-screen {
@@ -284,6 +295,7 @@ h1.hide {
     text-decoration: none;
     font-weight: bold;
     transition: all 0.3s;
+    cursor: pointer;
 }
 
 #final-message a:hover {
@@ -359,14 +371,14 @@ h1.hide {
 </head>
 <body>
   
-    <!-- Video - başlangıçta gizli, muted değil -->
-    <video id="bg-video" loop playsinline preload="auto">
+    <!-- Video - başlangıçta gizli -->
+    <video id="bg-video" loop playsinline webkit-playsinline preload="auto">
         <source src="video.mp4" type="video/mp4">
     </video>
 
     <div id="loading-screen">
         
-        <video id="intro-video" preload="auto" playsinline muted webkit-playsinline>
+        <video id="intro-video" preload="auto" playsinline webkit-playsinline muted>
             <source src="Sequence 01.mp4" type="video/mp4">
         </video>
 
@@ -605,11 +617,9 @@ h1.hide {
             introVideo.classList.add('show');
             
             // iOS için video attributeleri ayarla
-            if (isIOS) {
-                introVideo.setAttribute('playsinline', '');
-                introVideo.setAttribute('webkit-playsinline', '');
-                introVideo.muted = true;
-            }
+            introVideo.setAttribute('playsinline', '');
+            introVideo.setAttribute('webkit-playsinline', '');
+            introVideo.muted = true; // Zorunlu
             
             console.log('📹 Video elementi:', introVideo);
             
@@ -659,7 +669,7 @@ h1.hide {
             
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    console.log('▶️ Video oynatılıyor');
+                    console.log('▶️ Video oynatılıyor (sessiz)');
                     
                     // Progress bar'ı güncelle
                     const progressInterval = setInterval(() => {
@@ -698,49 +708,51 @@ h1.hide {
                 if (progress >= 100) {
                     clearInterval(quickInterval);
                     setTimeout(() => {
-                        transitionToMainScreen(false);
+                        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                        transitionToMainScreen(isIOS);
                     }, 300);
                 }
             }, 50);
         }
 
-       function transitionToMainScreen(isIOS) {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('info-screen').style.display = 'flex';
-    
-    const bgVideo = document.getElementById('bg-video');
-    bgVideo.style.display = 'block';
-    
-    // iOS için özel ayarlar
-    if (isIOS) {
-        bgVideo.setAttribute('playsinline', '');
-        bgVideo.setAttribute('webkit-playsinline', '');
-        // iPhone'da sessiz BAŞLATMA (zorunlu), sonra ses açma
-        bgVideo.muted = true;
-        
-        bgVideo.play().then(() => {
-            console.log('▶️ Arkaplan video sessiz başladı');
-            // Video başladıktan sonra sesi açmayı dene
-            setTimeout(() => {
-                bgVideo.muted = false;
-                console.log('🔊 Ses açıldı (denendi)');
-            }, 500);
-        }).catch(e => {
-            console.warn('⚠️ Arkaplan video oynatılamadı:', e);
-        });
-    } else {
-        // Android/Desktop - normal oynat
-        bgVideo.play().then(() => {
-            console.log('▶️ Arkaplan video oynatılıyor');
-        }).catch(e => {
-            console.warn('⚠️ Video otomatik oynatılamadı:', e);
-            bgVideo.muted = true;
-            bgVideo.play();
-        });
-    }
-    
-    startInfoReveal();
-}
+        function transitionToMainScreen(isIOS) {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('info-screen').style.display = 'flex';
+            
+            const bgVideo = document.getElementById('bg-video');
+            bgVideo.style.display = 'block';
+            
+            // Video attributeleri ayarla
+            bgVideo.setAttribute('playsinline', '');
+            bgVideo.setAttribute('webkit-playsinline', '');
+            bgVideo.muted = true; // Önce sessiz başlat
+            
+            console.log('🎬 Arkaplan video başlatılıyor...');
+            
+            bgVideo.play().then(() => {
+                console.log('▶️ Arkaplan video oynatılıyor');
+                
+                // Video başladıktan sonra sesi açmayı dene
+                if (isIOS) {
+                    // iOS'ta kullanıcı etkileşimi gerektiği için ses genelde açılmaz
+                    // Ama yine de deneyelim
+                    setTimeout(() => {
+                        bgVideo.muted = false;
+                        console.log('🔊 Ses açma denendi (iOS genelde izin vermez)');
+                    }, 1000);
+                } else {
+                    // Android/Desktop'ta sesi aç
+                    setTimeout(() => {
+                        bgVideo.muted = false;
+                        console.log('🔊 Ses açıldı');
+                    }, 500);
+                }
+            }).catch(e => {
+                console.error('⚠️ Arkaplan video oynatılamadı:', e);
+            });
+            
+            startInfoReveal();
+        }
 
 
 
@@ -822,39 +834,40 @@ h1.hide {
             collectUserInfo();
         });
 
-// Instagram link düzeltmesi - ALTERNATIF
-document.addEventListener('DOMContentLoaded', function() {
-    const link = document.getElementById('instagram-link');
-    if (link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const username = 'kkusiber';
-            const webUrl = 'https://www.instagram.com/' + username + '/';
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            
-            if (isIOS) {
-                // iOS çözümü aynı
-                window.location.href = 'instagram://user?username=' + username;
-                setTimeout(function() {
-                    if (!document.hidden) {
-                        window.location.href = webUrl;
+        // Instagram link düzeltmesi - YENİ ÇÖZÜM
+        document.addEventListener('DOMContentLoaded', function() {
+            const link = document.getElementById('instagram-link');
+            if (link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const username = 'kkusiber';
+                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    const isAndroid = /Android/i.test(navigator.userAgent);
+                    
+                    if (isIOS || isAndroid) {
+                        // Mobil: Universal Link kullan (hem iOS hem Android için çalışır)
+                        const universalLink = 'https://www.instagram.com/' + username + '/';
+                        
+                        // İframe trick - uygulamayı açmaya çalış
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        iframe.src = 'instagram://user?username=' + username;
+                        document.body.appendChild(iframe);
+                        
+                        // 500ms sonra iframe'i kaldır ve web'e yönlendir
+                        setTimeout(() => {
+                            document.body.removeChild(iframe);
+                            window.location.href = universalLink;
+                        }, 500);
+                        
+                    } else {
+                        // Desktop: yeni sekmede aç
+                        window.open('https://www.instagram.com/' + username + '/', '_blank');
                     }
-                }, 1000);
-                
-            } else if (isAndroid) {
-                // Android: Kullanıcıyı tarayıcıda Instagram'a yönlendir
-                // Instagram uygulaması yüklüyse, tarayıcı otomatik soracak
-                window.location.href = webUrl;
-                
-            } else {
-                // Desktop
-                window.open(webUrl, '_blank');
+                });
             }
         });
-    }
-});
     </script>
 <div id="final-message">
         <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="#" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
@@ -862,4 +875,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </html>
-
