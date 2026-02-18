@@ -834,8 +834,7 @@ h1.hide {
             collectUserInfo();
         });
 
-        // Instagram link düzeltmesi - YENİ ÇÖZÜM
-        // Instagram link düzeltmesi - EN GARANTİLİ ÇÖZÜM
+    // Instagram link düzeltmesi - ANDROID ÖZEL ÇÖZÜM
 document.addEventListener('DOMContentLoaded', function() {
     const link = document.getElementById('instagram-link');
     if (link) {
@@ -847,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isIOS) {
-                // iOS - çalışıyor
+                // iOS çözümü - çalışıyor, dokunma
                 const iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
                 iframe.src = 'instagram://user?username=' + username;
@@ -859,24 +858,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500);
                 
             } else if (isAndroid) {
-                // Android - Kullanıcıya seçim sun
-                const useApp = confirm('Instagram uygulamasında açmak ister misin?\n\nTamam = Uygulama\nİptal = Tarayıcı');
+                // Android için YENİ ÇÖZÜM - Instagram Web'i aç, Chrome otomatik app sorar
+                const webUrl = 'https://www.instagram.com/' + username + '/';
                 
-                if (useApp) {
-                    // Uygulama aç
-                    window.location.href = 'instagram://user?username=' + username;
-                    
-                    // 1.5 saniye sonra açılmadıysa web
-                    setTimeout(() => {
-                        window.location.href = 'https://www.instagram.com/' + username + '/';
-                    }, 1500);
-                } else {
-                    // Direkt web'de aç
-                    window.location.href = 'https://www.instagram.com/' + username + '/';
-                }
+                // Sayfayı yeni sekmede değil, aynı sekmede aç
+                window.location.href = webUrl;
+                
+                // NOT: Instagram uygulaması yüklüyse, Chrome tarayıcısı otomatik olarak
+                // "Instagram'da aç" butonu gösterecek. Kullanıcı oradan açabilir.
                 
             } else {
-                // Desktop
+                // Desktop: yeni sekmede aç
                 window.open('https://www.instagram.com/' + username + '/', '_blank');
             }
         });
@@ -889,4 +881,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </html>
+
 
