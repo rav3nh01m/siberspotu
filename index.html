@@ -835,39 +835,53 @@ h1.hide {
         });
 
         // Instagram link düzeltmesi - YENİ ÇÖZÜM
-        document.addEventListener('DOMContentLoaded', function() {
-            const link = document.getElementById('instagram-link');
-            if (link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
+        // Instagram link düzeltmesi - EN GARANTİLİ ÇÖZÜM
+document.addEventListener('DOMContentLoaded', function() {
+    const link = document.getElementById('instagram-link');
+    if (link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const username = 'kkusiber';
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            if (isIOS) {
+                // iOS - çalışıyor
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = 'instagram://user?username=' + username;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    window.location.href = 'https://www.instagram.com/' + username + '/';
+                }, 500);
+                
+            } else if (isAndroid) {
+                // Android - Kullanıcıya seçim sun
+                const useApp = confirm('Instagram uygulamasında açmak ister misin?\n\nTamam = Uygulama\nİptal = Tarayıcı');
+                
+                if (useApp) {
+                    // Uygulama aç
+                    window.location.href = 'instagram://user?username=' + username;
                     
-                    const username = 'kkusiber';
-                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-                    const isAndroid = /Android/i.test(navigator.userAgent);
-                    
-                    if (isIOS || isAndroid) {
-                        // Mobil: Universal Link kullan (hem iOS hem Android için çalışır)
-                        const universalLink = 'https://www.instagram.com/' + username + '/';
-                        
-                        // İframe trick - uygulamayı açmaya çalış
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = 'instagram://user?username=' + username;
-                        document.body.appendChild(iframe);
-                        
-                        // 500ms sonra iframe'i kaldır ve web'e yönlendir
-                        setTimeout(() => {
-                            document.body.removeChild(iframe);
-                            window.location.href = universalLink;
-                        }, 500);
-                        
-                    } else {
-                        // Desktop: yeni sekmede aç
-                        window.open('https://www.instagram.com/' + username + '/', '_blank');
-                    }
-                });
+                    // 1.5 saniye sonra açılmadıysa web
+                    setTimeout(() => {
+                        window.location.href = 'https://www.instagram.com/' + username + '/';
+                    }, 1500);
+                } else {
+                    // Direkt web'de aç
+                    window.location.href = 'https://www.instagram.com/' + username + '/';
+                }
+                
+            } else {
+                // Desktop
+                window.open('https://www.instagram.com/' + username + '/', '_blank');
             }
         });
+    }
+});
     </script>
 <div id="final-message">
         <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="#" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
@@ -875,3 +889,4 @@ h1.hide {
 </body>
 
 </html>
+
