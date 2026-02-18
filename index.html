@@ -612,28 +612,21 @@ h1.hide {
     const introVideo = document.getElementById('intro-video');
     introVideo.classList.add('show');
     
+    // iOS kontrolü
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    console.log('📱 iOS cihaz:', isIOS);
     console.log('📹 Video elementi:', introVideo);
-    console.log('📹 Video src:', introVideo.src);
     
     // Video yüklenmeyi bekle
-    if (introVideo.readyState >= 2) {
-        // Video zaten yüklü
-        console.log('✅ Video zaten yüklü, başlatılıyor...');
-        startVideoProgress(introVideo);
-    } else {
-        // Video yüklenene kadar bekle
-        console.log('⏳ Video yükleniyor...');
-        introVideo.addEventListener('loadedmetadata', () => {
-            console.log('✅ Video yüklendi, süre:', introVideo.duration);
-            startVideoProgress(introVideo);
-        });
-        
-        introVideo.addEventListener('error', (e) => {
-            console.error('❌ Video yükleme hatası:', e);
-            alert('Video yüklenemedi. Dosya adını kontrol edin: Sequence 01.mp4');
-        });
-    }
-}
+    const startWhenReady = () => {
+        if (introVideo.readyState >= 2) {
+            console.log('✅ Video yüklü, başlatılıyor...');
+            startVideoProgress(introVideo, isIOS);
+        } else {
+            console.log('⏳ Video yükleniyor...');
+            introVideo.addEventListener('loadedmetadata', () => {
+                console.log('✅ Video metadata yüklendi, süre:', introVideo.duration);
 
 function startVideoProgress(introVideo) {
     const videoDuration = introVideo.duration * 1000; // milisaniye
@@ -749,26 +742,37 @@ document.getElementById('instagram-link').addEventListener('click', function(e) 
 });
 
             
-            timings.forEach((timing, index) => {
-                setTimeout(() => {
-                    const line = document.createElement('div');
-                    line.className = 'info-line';
-                    
-                    const isIP = timing.key === 'ip';
-                    const highlightClass = isIP ? 'ip-highlight' : 'highlight';
-                    
-                    const value = userInfo[timing.key] || 'Bilinmiyor';
-                    line.innerHTML = `${timing.label}: <span class="${highlightClass}">${value}</span>`;
-                    infoScreen.appendChild(line);
-                    
-                    setTimeout(() => {
-                        line.classList.add('show');
-                        line.classList.add('pulse');
-                        
-                        // Otomatik scroll
-                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 10);
-                }, timing.delay);
+           // Instagram link düzeltmesi
+document.getElementById('instagram-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    const username = 'kkusiber';
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    if (isIOS) {
+        // iOS: Önce app dene, açılmazsa browser
+        window.location.href = 'instagram://user?username=' + username;
+        
+        // 1.5 saniye sonra app açılmadıysa browser'a git
+        setTimeout(function() {
+            window.location.href = 'https://www.instagram.com/' + username + '/';
+        }, 1500);
+        
+    } else if (isAndroid) {
+        // Android: intent URL kullan
+        window.location.href = 'intent://instagram.com/_u/' + username + '/#Intent;package=com.instagram.android;scheme=https;end';
+        
+        // Fallback
+        setTimeout(function() {
+            window.location.href = 'https://www.instagram.com/' + username + '/';
+        }, 1500);
+        
+    } else {
+        // Desktop: yeni sekmede aç
+        window.open('https://www.instagram.com/' + username + '/', '_blank');
+    }
+});
            
 // En son bilgiden sonra mesajı göster
 setTimeout(() => {
@@ -801,5 +805,6 @@ setTimeout(() => {
 </body>
 
 </html>
+
 
 
