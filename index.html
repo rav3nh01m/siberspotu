@@ -377,7 +377,7 @@ h1.hide {
 
     <div id="loading-screen">
         
-        <video id="intro-video" preload="auto">
+        <video id="intro-video" preload="auto" playsinline muted webkit-playsinline>
             <source src="Sequence 01.mp4" type="video/mp4">
         </video>
 
@@ -596,103 +596,150 @@ h1.hide {
 
 
         function startProgress() {
-    console.log('🎬 startProgress başladı');
-    
-    // Başlığı gizle
-    document.querySelector('h1').classList.add('hide');
-    
-    // Loading screen'i düzenle
-    const loadingScreen = document.getElementById('loading-screen');
-    loadingScreen.classList.add('video-playing');
-    
-    // Progress container'ı üste taşı
-    document.getElementById('progress-container').classList.add('top');
-    
-    // Intro videoyu göster
-    const introVideo = document.getElementById('intro-video');
-    introVideo.classList.add('show');
-    
-    console.log('📹 Video elementi:', introVideo);
-    console.log('📹 Video src:', introVideo.src);
-    
-    // Video yüklenmeyi bekle
-    if (introVideo.readyState >= 2) {
-        // Video zaten yüklü
-        console.log('✅ Video zaten yüklü, başlatılıyor...');
-        startVideoProgress(introVideo);
-    } else {
-        // Video yüklenene kadar bekle
-        console.log('⏳ Video yükleniyor...');
-        introVideo.addEventListener('loadedmetadata', () => {
-            console.log('✅ Video yüklendi, süre:', introVideo.duration);
-            startVideoProgress(introVideo);
-        });
-        
-        introVideo.addEventListener('error', (e) => {
-            console.error('❌ Video yükleme hatası:', e);
-            alert('Video yüklenemedi. Dosya adını kontrol edin: Sequence 01.mp4');
-        });
-    }
-}
-
-function startVideoProgress(introVideo) {
-    const videoDuration = introVideo.duration * 1000; // milisaniye
-    const updateInterval = videoDuration / 100; // 100 adımda
-    
-    console.log('⏱️ Video süresi:', videoDuration, 'ms');
-    console.log('⏱️ Update interval:', updateInterval, 'ms');
-    
-    let progress = 0;
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
-    
-    // Videoyu başlat
-    introVideo.play().then(() => {
-        console.log('▶️ Video oynatılıyor');
-    }).catch(e => {
-        console.error('❌ Video oynatma hatası:', e);
-        // Sessiz dene
-        introVideo.muted = true;
-        introVideo.play().then(() => {
-            console.log('▶️ Video sessiz oynatılıyor');
-            setTimeout(() => {
-                introVideo.muted = false;
-            }, 100);
-        });
-    });
-    
-    // Progress bar'ı güncelle
-    const progressInterval = setInterval(() => {
-        progress += 1;
-        progressBar.style.width = progress + '%';
-        progressText.textContent = progress + '%';
-
-        if (progress >= 100) {
-            clearInterval(progressInterval);
-            console.log('✅ Progress tamamlandı, geçiş yapılıyor...');
+            console.log('🎬 startProgress başladı');
             
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('info-screen').style.display = 'flex';
-                
-                const bgVideo = document.getElementById('bg-video');
-                bgVideo.style.display = 'block';
-                
-                bgVideo.play().catch(e => {
-                    console.warn('⚠️ Arkaplan video otomatik oynatılamadı:', e);
-                    bgVideo.muted = true;
-                    bgVideo.play().then(() => {
-                        setTimeout(() => {
-                            bgVideo.muted = false;
-                        }, 100);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            console.log('📱 iOS cihaz:', isIOS);
+            
+            // Başlığı gizle
+            document.querySelector('h1').classList.add('hide');
+            
+            // Loading screen'i düzenle
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.classList.add('video-playing');
+            
+            // Progress container'ı üste taşı
+            document.getElementById('progress-container').classList.add('top');
+            
+            // Intro videoyu göster
+            const introVideo = document.getElementById('intro-video');
+            introVideo.classList.add('show');
+            
+            // iOS için video attributeleri ayarla
+            if (isIOS) {
+                introVideo.setAttribute('playsinline', '');
+                introVideo.setAttribute('webkit-playsinline', '');
+                introVideo.muted = true;
+            }
+            
+            console.log('📹 Video elementi:', introVideo);
+            
+            // Video yüklenmeyi bekle
+            introVideo.load();
+            
+            const tryPlay = () => {
+                if (introVideo.readyState >= 2) {
+                    console.log('✅ Video yüklü, başlatılıyor...');
+                    startVideoProgress(introVideo, isIOS);
+                } else {
+                    console.log('⏳ Video yükleniyor...');
+                    introVideo.addEventListener('loadedmetadata', () => {
+                        console.log('✅ Video metadata yüklendi, süre:', introVideo.duration);
+                        startVideoProgress(introVideo, isIOS);
+                    }, { once: true });
+                    
+                    introVideo.addEventListener('error', (e) => {
+                        console.error('❌ Video yükleme hatası:', e);
+                        skipToMainScreen();
                     });
-                });
-                
-                startInfoReveal();
-            }, 500);
+                    
+                    setTimeout(() => {
+                        if (introVideo.readyState < 2) {
+                            console.warn('⚠️ Video 3 saniyede yüklenmedi, atlanıyor...');
+                            skipToMainScreen();
+                        }
+                    }, 3000);
+                }
+            };
+            
+            tryPlay();
         }
-    }, updateInterval);
-}
+
+        function startVideoProgress(introVideo, isIOS) {
+            const videoDuration = introVideo.duration * 1000;
+            const updateInterval = videoDuration / 100;
+            
+            console.log('⏱️ Video süresi:', videoDuration, 'ms');
+            
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            // Videoyu başlat
+            const playPromise = introVideo.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('▶️ Video oynatılıyor');
+                    
+                    // Progress bar'ı güncelle
+                    const progressInterval = setInterval(() => {
+                        progress += 1;
+                        progressBar.style.width = progress + '%';
+                        progressText.textContent = progress + '%';
+
+                        if (progress >= 100) {
+                            clearInterval(progressInterval);
+                            console.log('✅ Progress tamamlandı');
+                            transitionToMainScreen(isIOS);
+                        }
+                    }, updateInterval);
+                }).catch(e => {
+                    console.error('❌ Video oynatma hatası:', e);
+                    skipToMainScreen();
+                });
+            } else {
+                skipToMainScreen();
+            }
+        }
+
+        function skipToMainScreen() {
+            console.log('⏭️ Ana ekrana geçiliyor (video atlandı)');
+            
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            const quickInterval = setInterval(() => {
+                progress += 10;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                progressText.textContent = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(quickInterval);
+                    setTimeout(() => {
+                        transitionToMainScreen(false);
+                    }, 300);
+                }
+            }, 50);
+        }
+
+        function transitionToMainScreen(isIOS) {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('info-screen').style.display = 'flex';
+            
+            const bgVideo = document.getElementById('bg-video');
+            bgVideo.style.display = 'block';
+            
+            if (isIOS) {
+                bgVideo.muted = true;
+                bgVideo.setAttribute('playsinline', '');
+            }
+            
+            bgVideo.play().then(() => {
+                console.log('▶️ Arkaplan video oynatılıyor');
+                if (isIOS) {
+                    setTimeout(() => {
+                        bgVideo.muted = false;
+                    }, 100);
+                }
+            }).catch(e => {
+                console.warn('⚠️ Arkaplan video otomatik oynatılamadı:', e);
+            });
+            
+            startInfoReveal();
+        }
 
 
 
@@ -731,34 +778,6 @@ function startVideoProgress(introVideo) {
                 { delay: 13125, key: 'gpuInfo', label: 'GPU Info' }
             ];
 
-
-document.getElementById('instagram-link').addEventListener('click', function(e) {
-    e.preventDefault(); // Linkin standart web açılışını durdur
-
-    var username = 'kkusiber';
-     var appUrl = 'instagram://user?username=' + username; 
-    var webUrl = 'https://www.instagram.com/' + username + '/';
-    // Bu şema (scheme) hem Android hem iOS uygulamasında doğrudan profile gitmeyi zorlar
-   
-
-    // Kullanıcı ajanı kontrolü (Mobil mi?)
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        
-        // Önce uygulamayı açmayı dene
-        window.location.href = appUrl;
-
-        // Eğer telefonda uygulama yüklü değilse, 500ms sonra tarayıcıda aç
-        // (Uygulama açılırsa tarayıcı arka planda kalır, kullanıcı fark etmez)
-        setTimeout(function() {
-            window.location.href = webUrl;
-        }, 500);
-        
-    } else {
-        // Masaüstü bilgisayarlar için direkt yeni sekmede web sitesini aç
-        window.open(webUrl, '_blank');
-    }
-});
-
             
             timings.forEach((timing, index) => {
                 setTimeout(() => {
@@ -780,13 +799,12 @@ document.getElementById('instagram-link').addEventListener('click', function(e) 
                         line.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 10);
                 }, timing.delay);
-           
-// En son bilgiden sonra mesajı göster
-setTimeout(() => {
-    document.getElementById('final-message').classList.add('show');
-}, 14000); // 13125 + ~1000ms ekstra
-
             });
+
+            // En son bilgiden sonra mesajı göster
+            setTimeout(() => {
+                document.getElementById('final-message').classList.add('show');
+            }, 14000);
         }
 
         document.getElementById('start-button').addEventListener('click', async () => {
@@ -802,11 +820,49 @@ setTimeout(() => {
         window.addEventListener('load', () => {
             collectUserInfo();
         });
+
+        // Instagram link düzeltmesi - iPhone ve Android için
+        document.addEventListener('DOMContentLoaded', function() {
+            const link = document.getElementById('instagram-link');
+            if (link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const username = 'kkusiber';
+                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    const isAndroid = /Android/i.test(navigator.userAgent);
+                    
+                    if (isIOS) {
+                        // iOS: Universal Link önce dene
+                        const universalLink = 'https://www.instagram.com/' + username + '/';
+                        window.location.href = universalLink;
+                        
+                        // 500ms sonra app scheme dene
+                        setTimeout(function() {
+                            window.location.href = 'instagram://user?username=' + username;
+                        }, 500);
+                        
+                    } else if (isAndroid) {
+                        // Android: Intent URL
+                        const intentUrl = 'intent://instagram.com/_u/' + username + '/#Intent;package=com.instagram.android;scheme=https;end';
+                        window.location.href = intentUrl;
+                        
+                        // Fallback
+                        setTimeout(function() {
+                            window.location.href = 'https://www.instagram.com/' + username + '/';
+                        }, 1500);
+                        
+                    } else {
+                        // Desktop: yeni sekmede aç
+                        window.open('https://www.instagram.com/' + username + '/', '_blank');
+                    }
+                });
+            }
+        });
     </script>
 <div id="final-message">
-        <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="https://www.instagram.com/kkusiber/" target="_blank" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
+        <p>Sakin ol, internette gördüğün heryere tıklama ve nasıl yapıldığını öğrenmek için <a href="#" id="instagram-link">@kkusiber</a>'i ziyaret edin</p>
     </div>
 </body>
 
 </html>
-
