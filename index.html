@@ -731,6 +731,24 @@ function startVideoProgress(introVideo) {
                 { delay: 13125, key: 'gpuInfo', label: 'GPU Info' }
             ];
 
+
+document.getElementById('instagram-link').addEventListener('click', function(e) {
+    if (/Android/i.test(navigator.userAgent)) {
+        // Android için Instagram app intent
+        return; // intent URL çalışsın
+    } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // iOS için
+        e.preventDefault();
+        window.location.href = 'instagram://user?username=kkusiber';
+        setTimeout(() => {
+            if (document.hasFocus()) {
+                window.location.href = 'https://www.instagram.com/kkusiber/';
+            }
+        }, 500);
+    }
+});
+
+            
             timings.forEach((timing, index) => {
                 setTimeout(() => {
                     const line = document.createElement('div');
@@ -783,4 +801,5 @@ setTimeout(() => {
 </body>
 
 </html>
+
 
