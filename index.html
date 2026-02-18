@@ -736,9 +736,10 @@ document.getElementById('instagram-link').addEventListener('click', function(e) 
     e.preventDefault(); // Linkin standart web açılışını durdur
 
     var username = 'kkusiber';
+     var appUrl = 'instagram://user?username=' + username; 
     var webUrl = 'https://www.instagram.com/' + username + '/';
     // Bu şema (scheme) hem Android hem iOS uygulamasında doğrudan profile gitmeyi zorlar
-    var appUrl = 'instagram://user?username=' + username; 
+   
 
     // Kullanıcı ajanı kontrolü (Mobil mi?)
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
